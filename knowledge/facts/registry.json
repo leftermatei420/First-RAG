@@ -1,0 +1,8 @@
+[
+    {
+        "id": "world_lore",
+        "name": "World Lore",
+        "description": "Permanent facts about the kingdom of Valeria: places, rulers, and landmarks the DM must know.",
+        "always_load": true
+    }
+]

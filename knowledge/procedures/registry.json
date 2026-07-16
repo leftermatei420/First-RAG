@@ -1,0 +1,8 @@
+[
+    {
+        "id": "game_rules",
+        "name": "Game Rules",
+        "description": "Complete rulebook: character classes, combat, monsters, leveling, loot, and skill checks.",
+        "always_load": false
+    }
+]
