@@ -11,6 +11,8 @@ from config import OUTPUT_TOKEN_PRICE_PER_MILLION
 from config import MAX_CONTEXT_TOKENS
 from utils import count_tokens
 
+
+
 def load_file(path):
     try:
         with open(path, 'r', encoding="utf-8") as f:
@@ -79,5 +81,26 @@ class ConversationContext:
 
     def get_history(self):
         return self.messages
+    
+    def save(self, path="session.json"):
+        data = {
+            "messages": self.messages,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+    def load(self, path="session.json"):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.messages = data["messages"]
+            self.input_tokens = data["input_tokens"]
+            self.output_tokens = data["output_tokens"]
+            return True
+        except FileNotFoundError:
+            return False
+
 
     

@@ -13,6 +13,11 @@ class Agent:
         self.tools = {tool.name: tool for tool in tools} if tools else {}
         self.embeddings_client = EmbeddingsClient()
 
+    def _count_input(self):
+        for msg in self.context.get_history():
+            self.context.input_tokens += count_tokens(str(msg.get("content", "")))
+
+
     def _handle_tool_calls(self, tool_calls):
         results = []
         for tc in tool_calls:
@@ -55,11 +60,7 @@ class Agent:
             })
 
         self.context.compress()
-
-        for msg in self.context.get_history():
-            self.context.input_tokens += count_tokens(str(msg.get("content", "")))
-
-        
+        self._count_input()
         response = self.llm_client.generate_response(
             self.context.get_history(),
             tools=list(self.tools.values())
@@ -69,17 +70,22 @@ class Agent:
         self.context.output_tokens += count_tokens(str(message.get("content", "")))
         tool_calls = message.get("tool_calls", [])
 
-        if tool_calls:
+        while tool_calls:
             self.context.add_message(message)
 
             tool_results = self._handle_tool_calls(tool_calls)
             for result in tool_results:
                 self.context.add_message(result)
 
+            self._count_input()
+
             response = self.llm_client.generate_response(
-                self.context.get_history()
+                self.context.get_history(),
+                tools=list(self.tools.values())
             )
             message = response["message"]
+            self.context.output_tokens += count_tokens(str(message.get("content", "")))
+            tool_calls = message.get("tool_calls", [])
 
         self.context.add_message(message)
 

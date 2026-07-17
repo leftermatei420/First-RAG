@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Valeria — The Gilded Flagon</title>
+<style>
+  body { background:#1a1410; color:#e8dcc8; font-family:Georgia, serif;
+         max-width:700px; margin:0 auto; padding:20px; }
+  h1 { color:#d4a017; text-align:center; }
+  #chat { border:1px solid #d4a017; border-radius:8px; padding:15px;
+          height:60vh; overflow-y:auto; background:#241c14; }
+  .you { color:#e07b39; margin:10px 0; }
+  .dm  { color:#c9a3e0; margin:10px 0; white-space:pre-wrap; }
+  #bar { display:flex; gap:8px; margin-top:12px; }
+  #msg { flex:1; padding:10px; background:#241c14; color:#e8dcc8;
+         border:1px solid #8b7355; border-radius:6px; }
+  button { padding:10px 20px; background:#d4a017; border:none;
+           border-radius:6px; font-weight:bold; cursor:pointer; }
+</style>
+</head>
+<body>
+<h1>⚔ VALERIA ⚔</h1>
+<div style="text-align:center; margin-bottom:10px;">
+  <button onclick="menu('/new')">⚔ New Adventure</button>
+  <button onclick="menu('/load')">📜 Continue</button>
+</div>
+<div id="chat"></div>
+<div id="bar">
+  <input id="msg" placeholder="What do you do, adventurer?" />
+  <button onclick="send()">Send</button>
+</div>
+
+<script>
+async function send() {
+
+  const input = document.getElementById("msg");
+  const chat = document.getElementById("chat");
+  const text = input.value.trim();
+  if (!text) return;
+
+  chat.innerHTML += `<div class="you"><b>You:</b> ${text}</div>`;
+  input.value = "";
+
+  const res = await fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text })
+  });
+  const data = await res.json();
+
+  chat.innerHTML += `<div class="dm"><b>🎲 Garcea:</b> ${data.reply}</div>`;
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function menu(route) {
+  const res = await fetch(route, { method: "POST" });
+  const data = await res.json();
+  const chat = document.getElementById("chat");
+  chat.innerHTML = "";   
+  chat.innerHTML += `<div class="dm"><i>${data.status}</i></div>`;
+
+  let greetText;
+  if (route === "/new") {
+    greetText = "A new player sits at your table. Greet them and start the adventure.";
+  } else {
+    greetText = "The player has returned. Welcome them back and briefly recap where the story left off.";
+  }
+
+  chat.innerHTML += `<div class="dm"><i>Garcea consults the fates...</i></div>`;
+
+
+   const res2 = await fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: greetText })
+  });
+
+  const data2 = await res2.json();
+  chat.innerHTML += `<div class="dm"><b>🎲 Garcea:</b> ${data2.reply}</div>`;
+  chat.scrollTop = chat.scrollHeight;
+  
+}
+
+document.getElementById("msg").addEventListener("keydown", e => {
+  if (e.key === "Enter") send();
+});
+</script>
+</body>
+</html>
