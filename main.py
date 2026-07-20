@@ -43,7 +43,6 @@ def main():
 
     agent = Agent(llm_client, context, tools=tools)
 
-    #print("AI Assistant started. Type 'exit' to quit.")
     console.print(Panel.fit(
         "[bold #d4a017]⚔  VALERIA  ⚔[/]\n"
         "[#8b7355]The Gilded Flagon awaits, adventurer.[/]\n"
@@ -60,6 +59,19 @@ def main():
                 console.print("[dim #8b7355]The tavern door closes behind you...[/]")
                 context.save()
                 break
+            if user_input.lower().startswith("export "):
+                filename = user_input.split(" ", 1)[1].strip()
+                context.save(filename)
+                console.print(f"[#d4a017]Adventure exported to {filename}[/]")
+                continue
+
+            if user_input.lower().startswith("import "):
+                filename = user_input.split(" ", 1)[1].strip()
+                if context.load(filename):
+                    console.print(f"[#d4a017]Adventure imported from {filename}[/]")
+                else:
+                    console.print(f"[dim #8b7355]Could not load {filename} — file missing or corrupted.[/]")
+                continue
             with console.status("[#9b59b6]Garcea consults the fates...[/]", spinner="dots12"):
                 response = agent.process_message(user_input)
 

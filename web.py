@@ -15,7 +15,14 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    user_message = request.json["message"]
+    data = request.get_json(silent=True)
+    if not data or "message" not in data:
+        return jsonify({"error": "Request must be JSON with a 'message' field"}), 400
+
+    user_message = data["message"]
+    if not isinstance(user_message, str) or not user_message.strip():
+        return jsonify({"error": "'message' must be a non-empty string"}), 400
+
     reply = agent.process_message(user_message)
     context.save()
     return jsonify({"reply": reply})
@@ -35,4 +42,5 @@ def load_game():
     else:
         return jsonify({"status": "no save found"})
 
+print("Server running on http://localhost:5000")
 app.run(port=5000)

@@ -2,6 +2,8 @@ import requests
 import json
 
 from config import EMBEDDINGS_MODEL, EMBEDDINGS_ENDPOINT, EMBEDDINGS_FILE
+import logging
+logger = logging.getLogger(__name__)
 
 
 class EmbeddingsClient:
@@ -62,7 +64,12 @@ class EmbeddingsClient:
 
             return results
         
-        except requests.exceptions.ConnectionError:
+        except FileNotFoundError:
+            logger.warning("Embeddings file not found, retrieval skipped")
+            print(f"Warning: {EMBEDDINGS_FILE} not found, run embedding_generator.py first. Skipping retrieval.")
+            return []
+        except requests.exceptions.RequestException:
+            logger.warning("Embeddings service unavailable, retrieval skipped")
             print("Warning: embeddings service unavailable, skipping retrieval")
             return []
 

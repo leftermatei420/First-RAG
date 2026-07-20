@@ -5,6 +5,9 @@ import json
 from utils import count_tokens
 from embeddings_client import EmbeddingsClient
 from config import SIMILARITY_THRESHOLD
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Agent:
     def __init__(self, llm_client, context, tools=None):
@@ -22,9 +25,9 @@ class Agent:
         results = []
         for tc in tool_calls:
             tool_name = tc["function"]["name"]
-            #arguments = tc["function"]["arguments"]
             arguments = json.loads(tc["function"]["arguments"])
             tool_id = tc["id"]
+            logger.info(f"Tool call: {tool_name}({arguments})")
 
             tool = self.tools.get(tool_name)
             if tool:
@@ -40,6 +43,7 @@ class Agent:
         return results
 
     def process_message(self, user_message):
+        logger.info(f"User: {user_message}")
         self.context.add_message({
             "role": "user",
             "content": user_message
@@ -57,6 +61,15 @@ class Agent:
             self.context.add_message({
                 "role": "system",
                 "content": f"Relevant knowledge for this question:\n{knowledge}"
+            })
+        else:
+            self.context.add_message({
+                "role": "system",
+                "content": (
+                    "Relevant knowledge: none found in the knowledge base for this question. "
+                    "Answer from your general instructions and world lore. If the question is about "
+                    "specific rules or facts you don't have, say you don't know instead of inventing them."
+                )
             })
 
         self.context.compress()
@@ -93,4 +106,5 @@ class Agent:
         print(f"Output tokens: {self.context.output_tokens}")
         print(f"Estimated cost: ${self.context.get_cost():.6f}")
 
+        logger.info(f"Assistant: {message.get('content', '')}")
         return message.get("content", "")

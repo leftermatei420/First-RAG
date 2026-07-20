@@ -10,6 +10,9 @@ from config import INPUT_TOKEN_PRICE_PER_MILLION
 from config import OUTPUT_TOKEN_PRICE_PER_MILLION
 from config import MAX_CONTEXT_TOKENS
 from utils import count_tokens
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -19,13 +22,23 @@ def load_file(path):
             return f.read()
     except FileNotFoundError:
         print(f"Warning: file not found: {path}")
+        logger.warning(f"File not found: {path}")
         return ""
 
     
 def load_registry(folder):
     path = os.path.join("knowledge", folder, "registry.json")
-    with open(path, 'r', encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(path, 'r', encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        logger.warning(f"Registry not found: {path}")
+        print(f"Warning: registry not found: {path}")
+        return []
+    except json.JSONDecodeError as e:
+        logger.warning(f"Invalid JSON in {path}")
+        print(f"Warning: invalid JSON in {path}: {e}")
+        return []
     
 def load_always_load_docs(folder):
     sections = []
@@ -60,8 +73,10 @@ class ConversationContext:
         return total
 
     def compress(self):
-        while self.count_context_tokens() > MAX_CONTEXT_TOKENS:
+        while self.count_context_tokens() > MAX_CONTEXT_TOKENS and len(self.messages) > 2:
             self.messages.pop(1)
+            while len(self.messages) > 1 and self.messages[1].get("role") == "tool":
+                self.messages.pop(1)
         
     def assemble_system_prompt(self):
         sections = []
@@ -100,6 +115,10 @@ class ConversationContext:
             self.output_tokens = data["output_tokens"]
             return True
         except FileNotFoundError:
+            return False
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.warning(f"Save file corrupted: {e}")
+            print(f"Warning: save file is corrupted ({e}), starting fresh")
             return False
 
 

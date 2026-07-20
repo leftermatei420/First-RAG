@@ -2,3 +2,4 @@ session.json
 embeddings.json
 __pycache__/
 .env
+app.log
